@@ -1,4 +1,4 @@
-# purescript-simple-request
+# purescript-simple-request [![Build Status](https://travis-ci.org/Thimoteus/purescript-simple-request.svg)](https://travis-ci.org/Thimoteus/purescript-simple-request)
 
 This is a very small wrapper around node's http and https modules that uses purescript-aff for all the neat stuff.
 

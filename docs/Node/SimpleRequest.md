@@ -1,26 +1,15 @@
 ## Module Node.SimpleRequest
 
-#### `SimpleRequestOptions`
-
-``` purescript
-data SimpleRequestOptions :: *
-```
-
-#### `SimpleRequestHeader`
-
-``` purescript
-data SimpleRequestHeader :: *
-```
-
-##### Instances
-``` purescript
-instance srHeaderIsOption :: IsOption (Options SimpleRequestHeader)
-```
-
 #### `REQUEST`
 
 ``` purescript
-data REQUEST :: !
+type REQUEST = REQUEST
+```
+
+#### `Response`
+
+``` purescript
+type Response = Response
 ```
 
 #### `Opts`
@@ -35,10 +24,21 @@ type Opts = Options SimpleRequestOptions
 type AffReq e = Aff (request :: REQUEST | e)
 ```
 
-#### `Response`
+#### `SimpleRequestHeader`
 
 ``` purescript
-type Response = { body :: Foreign, statusCode :: Foreign, statusMessage :: Foreign, headersSent :: Foreign, headers :: Foreign, httpVersion :: Foreign, rawHeaders :: Foreign, trailers :: Foreign, rawTrailers :: Foreign }
+data SimpleRequestHeader :: *
+```
+
+##### Instances
+``` purescript
+instance srHeaderIsOption :: IsOption (Options SimpleRequestHeader)
+```
+
+#### `SimpleRequestOptions`
+
+``` purescript
+data SimpleRequestOptions :: *
 ```
 
 #### `srHeader`
@@ -54,6 +54,15 @@ reqHeader :: Options SimpleRequestHeader
 reqHeader = srHeader ContentType := "application/x-www-form-urlencoded"
          <> srHeader ContentLength := "20"
 ```
+
+#### `header2SRHeader`
+
+``` purescript
+header2SRHeader :: Header -> Options SimpleRequestHeader
+```
+
+Converts a Network.HTTP.Header to an Options SimpleRequestOptions.
+Useful if you've defined headers in terms of Network.HTTP.Header.
 
 #### `request`
 
