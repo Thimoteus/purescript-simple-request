@@ -2,6 +2,7 @@ module Test.Main where
 
 import Prelude
 import Node.SimpleRequest
+import qualified Node.SimpleRequest.Secure as S
 import qualified Network.HTTP as HTTP
 import Data.Options
 import Control.Alt
@@ -17,12 +18,13 @@ optHeaders :: Options SimpleRequestHeader
 optHeaders = srHeader HTTP.UserAgent := "purescript-simple-request testing"
 
 opts :: Opts
-opts = hostname := "www.reddit.com"
-    <> path     := "/.json"
+opts = hostname := "http://www.github.com"
+    <> path     := "/purescript/purescript"
     <> method   := HTTP.GET
     <> headers  := optHeaders
 
 main = launchAff $ do
-  res <- runPar (Par (get "http://www.reddit.com/.json") <|>
+  res <- runPar (Par (S.get "https://www.reddit.com/.json") <|>
                       Par (request opts ""))
-  liftEff $ logAnything res.body
+  liftEff $ logAnything res.headers
+
