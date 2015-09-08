@@ -7,13 +7,13 @@ This is a very small wrapper around node's http and https modules that uses pure
 ```purescript
 foreign import unsafePrint :: forall a e. a -> Eff ( console :: CONSOLE | e ) Unit
 
-optHeaders :: Options SimpleRequestHeader
-optHeaders = srHeader HTTP.UserAgent := "purescript-simple-request example"
+optHeaders :: SRHeaderOptions
+optHeaders = srHeaderOpts [ HTTP.UserAgent, "purescript-simple-request example" ]
 
 opts :: Opts
 opts = hostname := "http://www.github.com"
     <> path     := "/purescript/purescript"
-    <> method   := HTTP.GET
+    <> method   := GET
     <> headers  := optHeaders
 
 main = launchAff $ do

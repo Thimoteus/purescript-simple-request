@@ -1,6 +1,6 @@
 {
   "name": "purescript-simple-request",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "moduleType": [
     "node"
   ],
@@ -11,9 +11,9 @@
     "output"
   ],
   "dependencies": {
-    "purescript-console": "^0.1.0",
-    "purescript-options": "~0.4.0",
-    "purescript-aff": "~0.11.3",
-    "purescript-http": "~0.4.0"
+    "purescript-aff": "~0.12.0",
+    "purescript-generics": "~0.5.1",
+    "purescript-http": "~0.4.0",
+    "purescript-options": "~0.5.0"
   }
 }

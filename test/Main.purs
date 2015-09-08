@@ -14,17 +14,17 @@ import Control.Monad.Aff.Par
 
 foreign import logAnything :: forall a e. a -> Eff (console :: CONSOLE | e) Unit
 
-optHeaders :: Options SimpleRequestHeader
-optHeaders = srHeader HTTP.UserAgent := "purescript-simple-request testing"
+optHeaders :: SRHeaderOptions
+optHeaders = srHeaderOpts [ Tuple HTTP.UserAgent "purescript-simple-request testing"
+                          , Tuple HTTP.ContentLength "20" ]
 
 opts :: Opts
 opts = hostname := "http://www.github.com"
     <> path     := "/purescript/purescript"
-    <> method   := HTTP.GET
+    <> method   := GET
     <> headers  := optHeaders
 
 main = launchAff $ do
   res <- runPar (Par (S.get "https://www.reddit.com/.json") <|>
                       Par (request opts ""))
   liftEff $ logAnything res.headers
-

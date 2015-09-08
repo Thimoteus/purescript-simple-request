@@ -1,4 +1,4 @@
-module Node.SimpleRequest.Foreign ( REQUEST(), Response(), requestImpl) where
+module Node.SimpleRequest.Foreign ( REQUEST(), Response(), SRForeign(..), requestImpl ) where
 
 import Prelude
 
@@ -20,10 +20,13 @@ type Response = { body :: Foreign
 
 foreign import data REQUEST :: !
 
-foreign import isOptionPrimFn :: forall b a. Fn2 (Option b a) a (Options b)
+foreign import isOptionPrimFn :: forall opt value. Fn2 (Option opt value) value (Options opt)
 
-instance foreignIsOption :: IsOption Foreign where
+newtype SRForeign = SRForeign Foreign
+
+instance foreignIsOption :: IsOption SRForeign where
   assoc = runFn2 isOptionPrimFn
+  -- assoc (Option opt (SRForeign s)) value = runFn2 isOptionPrimFn (Option opt s) value
 
 foreign import requestImpl :: forall e. Fn5 Boolean
                                             Foreign
@@ -31,4 +34,3 @@ foreign import requestImpl :: forall e. Fn5 Boolean
                                             ( Error -> Eff ( request :: REQUEST | e ) Unit )
                                             ( Response -> Eff ( request :: REQUEST | e ) Unit )
                                             ( Eff ( request :: REQUEST | e ) Unit )
-
