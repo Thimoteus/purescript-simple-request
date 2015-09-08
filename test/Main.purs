@@ -5,6 +5,7 @@ import Node.SimpleRequest
 import qualified Node.SimpleRequest.Secure as S
 import qualified Network.HTTP as HTTP
 import Data.Options
+import Data.Tuple
 import Control.Alt
 import Control.Monad.Eff
 import Control.Monad.Eff.Console
