@@ -12,6 +12,18 @@ type Response = { body :: Foreign, statusCode :: Foreign, statusMessage :: Forei
 data REQUEST :: !
 ```
 
+#### `SRForeign`
+
+``` purescript
+newtype SRForeign
+  = SRForeign Foreign
+```
+
+##### Instances
+``` purescript
+instance foreignIsOption :: IsOption SRForeign
+```
+
 #### `requestImpl`
 
 ``` purescript

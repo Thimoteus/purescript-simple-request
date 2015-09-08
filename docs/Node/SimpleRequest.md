@@ -30,15 +30,48 @@ type AffReq e = Aff (request :: REQUEST | e)
 data SimpleRequestHeader :: *
 ```
 
-##### Instances
-``` purescript
-instance srHeaderIsOption :: IsOption (Options SimpleRequestHeader)
-```
-
 #### `SimpleRequestOptions`
 
 ``` purescript
 data SimpleRequestOptions :: *
+```
+
+#### `SRHeaderOptions`
+
+``` purescript
+newtype SRHeaderOptions
+  = SRHeaderOptions (Options SimpleRequestHeader)
+```
+
+##### Instances
+``` purescript
+instance srHeaderIsOption :: IsOption SRHeaderOptions
+```
+
+#### `runSRHeaderOptions`
+
+``` purescript
+runSRHeaderOptions :: SRHeaderOptions -> Options SimpleRequestHeader
+```
+
+#### `Verb`
+
+``` purescript
+data Verb
+  = DELETE
+  | HEAD
+  | GET
+  | OPTIONS
+  | PATCH
+  | POST
+  | PUT
+```
+
+##### Instances
+``` purescript
+instance genericVerb :: Generic Verb
+instance showVerb :: Show Verb
+instance verbIsOption :: IsOption Verb
 ```
 
 #### `srHeader`
@@ -48,12 +81,20 @@ srHeader :: HeaderHead -> Option SimpleRequestHeader String
 ```
 
 Takes a HeaderHead and gives a value you can use as a header object.
-For example: 
+For example:
 ```purescript
-reqHeader :: Options SimpleRequestHeader
-reqHeader = srHeader ContentType := "application/x-www-form-urlencoded"
-         <> srHeader ContentLength := "20"
+reqHeader :: SRHeaderOptions
+reqHeader = SRHeaderOptions (srHeader ContentType := "application/x-www-form-urlencoded"
+         <> srHeader ContentLength := "20")
 ```
+
+#### `srHeaderOpts`
+
+``` purescript
+srHeaderOpts :: Array (Tuple HeaderHead String) -> SRHeaderOptions
+```
+
+Takes an array of (HTTP.HeaderHead, String) tuples and creates an SRHeaderOptions value.
 
 #### `header2SRHeader`
 
