@@ -26,7 +26,6 @@ newtype SRForeign = SRForeign Foreign
 
 instance foreignIsOption :: IsOption SRForeign where
   assoc = runFn2 isOptionPrimFn
-  -- assoc (Option opt (SRForeign s)) value = runFn2 isOptionPrimFn (Option opt s) value
 
 foreign import requestImpl :: forall e. Fn5 Boolean
                                             Foreign

@@ -1,6 +1,6 @@
 {
   "name": "purescript-simple-request",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "moduleType": [
     "node"
   ],
@@ -10,6 +10,10 @@
     "bower_components",
     "output"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Thimoteus/purescript-simple-request.git"
+},
   "dependencies": {
     "purescript-aff": "~0.12.0",
     "purescript-generics": "~0.5.1",
