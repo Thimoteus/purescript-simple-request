@@ -8,7 +8,7 @@ This is a very small wrapper around node's http and https modules that uses pure
 foreign import unsafePrint :: forall a e. a -> Eff ( console :: CONSOLE | e ) Unit
 
 optHeaders :: SRHeaderOptions
-optHeaders = srHeaderOpts [ HTTP.UserAgent, "purescript-simple-request example" ]
+optHeaders = srHeaderOpts [ Tuple HTTP.UserAgent "purescript-simple-request example" ]
 
 opts :: Opts
 opts = hostname := "http://www.github.com"

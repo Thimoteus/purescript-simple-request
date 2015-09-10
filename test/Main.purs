@@ -16,8 +16,7 @@ import Control.Monad.Aff.Par
 foreign import logAnything :: forall a e. a -> Eff (console :: CONSOLE | e) Unit
 
 optHeaders :: SRHeaderOptions
-optHeaders = srHeaderOpts [ Tuple HTTP.UserAgent "purescript-simple-request testing"
-                          , Tuple HTTP.ContentLength "20" ]
+optHeaders = srHeaderOpts [ Tuple HTTP.UserAgent "purescript-simple-request testing" ]
 
 opts :: Opts
 opts = hostname := "http://www.github.com"
