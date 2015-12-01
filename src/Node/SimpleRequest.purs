@@ -10,8 +10,6 @@ import Data.Function
 import Data.Foreign
 import Data.Generic
 
-import Control.Monad.Eff
-import Control.Monad.Eff.Exception
 import Control.Monad.Aff
 import qualified Node.SimpleRequest.Foreign as F
 
@@ -41,17 +39,29 @@ instance srHeaderIsOption :: IsOption SRHeaderOptions where
   assoc k v = assoc (optionFn k) (F.SRForeign $ options $ runSRHeaderOptions v)
 
 -- | Options values as specified by [http.request](https://nodejs.org/api/http.html#http_http_request_options_callback).
-host           = opt "host" :: Option SimpleRequestOptions String
-hostname       = opt "hostname" :: Option SimpleRequestOptions String
-port           = opt "port" :: Option SimpleRequestOptions Int
-localAddress   = opt "localAddress" :: Option SimpleRequestOptions String
-socketPath     = opt "socketPath" :: Option SimpleRequestOptions String
-method         = opt "method" :: Option SimpleRequestOptions Verb
-path           = opt "path" :: Option SimpleRequestOptions String
-headers        = opt "headers" :: Option SimpleRequestOptions SRHeaderOptions
-auth           = opt "auth" :: Option SimpleRequestOptions String
-keepAlive      = opt "keepAlive" :: Option SimpleRequestOptions Boolean
-keepAliveMsecs = opt "keepAliveMsecs" :: Option SimpleRequestOptions Int
+
+host :: Option SimpleRequestOptions String
+host = opt "host"
+hostname :: Option SimpleRequestOptions String
+hostname = opt "hostname"
+port :: Option SimpleRequestOptions Int
+port = opt "port"
+localAddress :: Option SimpleRequestOptions String
+localAddress = opt "localAddress"
+socketPath :: Option SimpleRequestOptions String
+socketPath = opt "socketPath"
+method :: Option SimpleRequestOptions Verb
+method = opt "method"
+path :: Option SimpleRequestOptions String
+path = opt "path"
+headers :: Option SimpleRequestOptions SRHeaderOptions
+headers = opt "headers"
+auth :: Option SimpleRequestOptions String
+auth = opt "auth"
+keepAlive :: Option SimpleRequestOptions Boolean
+keepAlive = opt "keepAlive"
+keepAliveMsecs :: Option SimpleRequestOptions Int
+keepAliveMsecs = opt "keepAliveMsecs"
 
 -- | Takes a HeaderHead and gives a value you can use as a header object.
 -- | For example:

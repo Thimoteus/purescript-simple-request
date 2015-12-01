@@ -21,7 +21,7 @@ newtype SRForeign
 
 ##### Instances
 ``` purescript
-instance foreignIsOption :: IsOption SRForeign
+IsOption SRForeign
 ```
 
 #### `requestImpl`

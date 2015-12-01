@@ -45,7 +45,7 @@ newtype SRHeaderOptions
 
 ##### Instances
 ``` purescript
-instance srHeaderIsOption :: IsOption SRHeaderOptions
+IsOption SRHeaderOptions
 ```
 
 #### `runSRHeaderOptions`
@@ -69,9 +69,77 @@ data Verb
 
 ##### Instances
 ``` purescript
-instance genericVerb :: Generic Verb
-instance showVerb :: Show Verb
-instance verbIsOption :: IsOption Verb
+Generic Verb
+Show Verb
+IsOption Verb
+```
+
+#### `host`
+
+``` purescript
+host :: Option SimpleRequestOptions String
+```
+
+Options values as specified by [http.request](https://nodejs.org/api/http.html#http_http_request_options_callback).
+
+#### `hostname`
+
+``` purescript
+hostname :: Option SimpleRequestOptions String
+```
+
+#### `port`
+
+``` purescript
+port :: Option SimpleRequestOptions Int
+```
+
+#### `localAddress`
+
+``` purescript
+localAddress :: Option SimpleRequestOptions String
+```
+
+#### `socketPath`
+
+``` purescript
+socketPath :: Option SimpleRequestOptions String
+```
+
+#### `method`
+
+``` purescript
+method :: Option SimpleRequestOptions Verb
+```
+
+#### `path`
+
+``` purescript
+path :: Option SimpleRequestOptions String
+```
+
+#### `headers`
+
+``` purescript
+headers :: Option SimpleRequestOptions SRHeaderOptions
+```
+
+#### `auth`
+
+``` purescript
+auth :: Option SimpleRequestOptions String
+```
+
+#### `keepAlive`
+
+``` purescript
+keepAlive :: Option SimpleRequestOptions Boolean
+```
+
+#### `keepAliveMsecs`
+
+``` purescript
+keepAliveMsecs :: Option SimpleRequestOptions Int
 ```
 
 #### `srHeader`
