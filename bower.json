@@ -15,9 +15,9 @@
     "url": "git://github.com/Thimoteus/purescript-simple-request.git"
   },
   "dependencies": {
-    "purescript-aff": "~0.13.1",
-    "purescript-generics": "~0.7.0",
+    "purescript-aff": "~0.14.1",
+    "purescript-generics": "~0.7.2",
     "purescript-http": "~0.4.0",
-    "purescript-options": "~0.5.1"
+    "purescript-options": "~0.6.0"
   }
 }
