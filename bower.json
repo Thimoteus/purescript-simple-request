@@ -1,6 +1,7 @@
 {
   "name": "purescript-simple-request",
-  "version": "2.0.5",
+  "version": "3.0.0",
+  "license": "MIT",
   "moduleType": [
     "node"
   ],
@@ -15,9 +16,8 @@
     "url": "git://github.com/Thimoteus/purescript-simple-request.git"
   },
   "dependencies": {
-    "purescript-aff": "~0.13.1",
-    "purescript-generics": "~0.7.0",
     "purescript-http": "~0.4.0",
-    "purescript-options": "~0.5.1"
+    "purescript-aff": "^0.16.1",
+    "purescript-node-http": "^0.4.0"
   }
 }

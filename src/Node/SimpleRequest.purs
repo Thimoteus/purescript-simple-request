@@ -1,89 +1,115 @@
-module Node.SimpleRequest where
+module Node.SimpleRequest
+  ( Protocol(HTTP, HTTPS)
+  , SimpleOption
+  , protocol
+  , method
+  , hostname
+  , port
+  , path
+  , auth
+  , headers
+  , headersFromFoldable
+  --
+  , requestURI
+  , request
+  ) where
 
 import Prelude
-import qualified Network.HTTP as HTTP
 
-import Data.Options
-import Data.Tuple
-import Data.Foldable
-import Data.Function
-import Data.Foreign
-import Data.Generic
+import Network.HTTP as Network
 
-import Control.Monad.Aff
-import qualified Node.SimpleRequest.Foreign as F
+import Data.Options as Options
+import Data.Functor.Contravariant ((>$<))
+import Data.Tuple (Tuple(..))
+import Data.Foldable (class Foldable, foldl)
+import Data.StrMap (StrMap, empty, insert)
 
-type REQUEST = F.REQUEST
-type Response = F.Response
+import Control.Bind ((<=<))
+import Control.Monad.Aff as Aff
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Exception (Error)
 
-type Opts = Options SimpleRequestOptions
-type AffReq e = Aff ( request :: REQUEST | e )
-foreign import data SimpleRequestHeader :: *
-foreign import data SimpleRequestOptions :: *
+import Node.HTTP (HTTP) as Node
+import Node.HTTP.Client as Client
+import Node.Stream as Stream
 
-newtype SRHeaderOptions = SRHeaderOptions (Options SimpleRequestHeader)
-runSRHeaderOptions :: SRHeaderOptions -> Options SimpleRequestHeader
-runSRHeaderOptions (SRHeaderOptions o) = o
+data Protocol = HTTP | HTTPS
 
-data Verb = DELETE | HEAD | GET | OPTIONS | PATCH | POST | PUT
+derive instance eqProtocol :: Eq Protocol
 
-derive instance genericVerb :: Generic Verb
+type SimpleOption = Options.Option Client.RequestOptions
 
-instance showVerb :: Show Verb where
-  show = gShow
+protocolToString :: Protocol -> String
+protocolToString HTTP = "http:"
+protocolToString _ = "https:"
 
-instance verbIsOption :: IsOption Verb where
-  assoc k verb = assoc (optionFn k) (show verb)
+protocol :: SimpleOption Protocol
+protocol = protocolToString >$< Client.protocol
 
-instance srHeaderIsOption :: IsOption SRHeaderOptions where
-  assoc k v = assoc (optionFn k) (F.SRForeign $ options $ runSRHeaderOptions v)
+method :: SimpleOption Network.Verb
+method = show >$< Client.method
 
--- | Options values as specified by [http.request](https://nodejs.org/api/http.html#http_http_request_options_callback).
+hostname :: SimpleOption String
+hostname = Client.hostname
 
-host :: Option SimpleRequestOptions String
-host = opt "host"
-hostname :: Option SimpleRequestOptions String
-hostname = opt "hostname"
-port :: Option SimpleRequestOptions Int
-port = opt "port"
-localAddress :: Option SimpleRequestOptions String
-localAddress = opt "localAddress"
-socketPath :: Option SimpleRequestOptions String
-socketPath = opt "socketPath"
-method :: Option SimpleRequestOptions Verb
-method = opt "method"
-path :: Option SimpleRequestOptions String
-path = opt "path"
-headers :: Option SimpleRequestOptions SRHeaderOptions
-headers = opt "headers"
-auth :: Option SimpleRequestOptions String
-auth = opt "auth"
-keepAlive :: Option SimpleRequestOptions Boolean
-keepAlive = opt "keepAlive"
-keepAliveMsecs :: Option SimpleRequestOptions Int
-keepAliveMsecs = opt "keepAliveMsecs"
+port :: SimpleOption Int
+port = Client.port
 
--- | Takes a HeaderHead and gives a value you can use as a header object.
--- | For example:
--- | ```purescript
--- | reqHeader :: SRHeaderOptions
--- | reqHeader = SRHeaderOptions (srHeader ContentType := "application/x-www-form-urlencoded"
--- |          <> srHeader ContentLength := "20")
--- | ```
-srHeader :: HTTP.HeaderHead -> Option SimpleRequestHeader String
-srHeader = opt <<< show
+path :: SimpleOption String
+path = Client.path
 
--- | Takes an array of (HTTP.HeaderHead, String) tuples and creates an SRHeaderOptions value.
-srHeaderOpts :: Array (Tuple HTTP.HeaderHead String) -> SRHeaderOptions
-srHeaderOpts = SRHeaderOptions <<< foldMap (\ (Tuple h v) -> srHeader h := v)
+auth :: SimpleOption String
+auth = Client.auth
 
--- | Converts a Network.HTTP.Header to an Options SimpleRequestOptions.
--- | Useful if you've defined headers in terms of Network.HTTP.Header.
-header2SRHeader :: HTTP.Header -> Options SimpleRequestHeader
-header2SRHeader (HTTP.Header k v) = srHeader k := v
+headers :: SimpleOption Client.RequestHeaders
+headers = Client.headers
 
-request :: forall e. Opts -> String -> AffReq e Response
-request opts msg = makeAff $ (runFn5 F.requestImpl) false (options opts) msg
+headersFromFoldable :: forall f. Foldable f
+                    => f (Tuple Network.HeaderHead String)
+                    -> Client.RequestHeaders
+headersFromFoldable = Client.RequestHeaders <<< foldl f empty where
+  f :: StrMap String -> Tuple Network.HeaderHead String -> StrMap String
+  f m (Tuple hh str) = insert (show hh) str m
 
-get :: forall e. String -> AffReq e Response
-get addr = makeAff $ (runFn5 F.requestImpl) false (toForeign addr) ""
+-- Requests
+
+foreign import collapseStream :: forall w e. Stream.Readable w e
+                              -> (Error -> Eff e Unit)
+                              -> (String -> Eff e Unit)
+                              -> Eff e Unit
+
+collapseStreamAff :: forall w e. Stream.Readable w e -> Aff.Aff e String
+collapseStreamAff = Aff.makeAff <<< collapseStream
+
+-- from URI
+
+closeAndIgnoreResponseURI :: forall e. String
+                          -> (Client.Response -> Eff ( http :: Node.HTTP | e ) Unit)
+                          -> Eff ( http :: Node.HTTP | e ) Unit
+closeAndIgnoreResponseURI addr sc = do
+  req <- Client.requestFromURI addr sc
+  Stream.end (Client.requestAsStream req) (pure unit)
+
+requestURIAsAff :: forall e. String
+                -> Aff.Aff ( http :: Node.HTTP | e ) Client.Response
+requestURIAsAff = Aff.makeAff <<< const <<< closeAndIgnoreResponseURI
+
+requestURI :: forall e. String -> Aff.Aff ( http :: Node.HTTP | e ) String
+requestURI = collapseStreamAff <<< Client.responseAsStream <=< requestURIAsAff
+
+-- from Options
+
+closeAndIgnoreResponseOptions :: forall e. Options.Options Client.RequestOptions
+                              -> (Client.Response -> Eff ( http :: Node.HTTP | e ) Unit)
+                              -> Eff ( http :: Node.HTTP | e ) Unit
+closeAndIgnoreResponseOptions opts sc = do
+  req <- Client.request opts sc
+  Stream.end (Client.requestAsStream req) (pure unit)
+
+requestAsAff :: forall e. Options.Options Client.RequestOptions
+             -> Aff.Aff ( http :: Node.HTTP | e ) Client.Response
+requestAsAff = Aff.makeAff <<< const <<< closeAndIgnoreResponseOptions
+
+request :: forall e. Options.Options Client.RequestOptions
+        -> Aff.Aff ( http :: Node.HTTP | e ) String
+request = collapseStreamAff <<< Client.responseAsStream <=< requestAsAff

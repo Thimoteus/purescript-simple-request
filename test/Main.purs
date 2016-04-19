@@ -1,30 +1,28 @@
 module Test.Main where
 
 import Prelude
-import Node.SimpleRequest
-import qualified Node.SimpleRequest.Secure as S
-import qualified Network.HTTP as HTTP
-import Data.Options
-import Data.Tuple
-import Control.Alt
-import Control.Monad.Eff
-import Control.Monad.Eff.Console
-import Control.Monad.Eff.Class
-import Control.Monad.Aff
-import Control.Monad.Aff.Par
 
-foreign import logAnything :: forall a e. a -> Eff (console :: CONSOLE | e) Unit
+import Control.Monad.Aff as Aff
+import Control.Monad.Eff.Console (print, log)
+import Control.Monad.Eff.Class (liftEff)
 
-optHeaders :: SRHeaderOptions
-optHeaders = srHeaderOpts [ Tuple HTTP.UserAgent "purescript-simple-request testing" ]
+import Data.Either (either)
+import Data.Options ((:=))
+import Data.Tuple.Nested ((/\))
 
-opts :: Opts
-opts = hostname := "http://www.github.com"
-    <> path     := "/purescript/purescript"
-    <> method   := GET
-    <> headers  := optHeaders
+import Network.HTTP as HTTP
 
-main = launchAff $ do
-  res <- runPar (Par (S.get "https://www.reddit.com/.json") <|>
-                      Par (request opts ""))
-  liftEff $ logAnything res.headers
+import Node.Encoding (Encoding(..))
+import Node.SimpleRequest as SR
+
+testOpts = SR.hostname := "reddit.com"
+        <> SR.path := "/r/purescript"
+        <> SR.method := HTTP.GET
+        <> SR.protocol := SR.HTTPS
+        <> SR.headers := SR.headersFromFoldable [HTTP.UserAgent /\ "purescript-simple-request testing"]
+
+main = Aff.runAff print pure $ void do
+  res1 <- Aff.attempt $ SR.requestURI "https://www.reddit.com/r/purescript.json"
+  liftEff $ either (const $ log "aww :(") (const $ log "yay!") res1
+  res2 <- Aff.attempt $ SR.request testOpts
+  liftEff $ either (const $ log "aww :(") (const $ log "yay!") res2
