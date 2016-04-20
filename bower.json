@@ -19,5 +19,8 @@
     "purescript-http": "~0.4.0",
     "purescript-aff": "^0.16.1",
     "purescript-node-http": "^0.4.0"
+  },
+  "devDependencies": {
+    "purescript-debug": "^0.1.3"
   }
 }

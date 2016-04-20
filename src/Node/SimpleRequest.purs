@@ -1,6 +1,7 @@
 module Node.SimpleRequest
   ( Protocol(HTTP, HTTPS)
   , SimpleOption
+  , Response
   , protocol
   , method
   , hostname
@@ -10,8 +11,12 @@ module Node.SimpleRequest
   , headers
   , headersFromFoldable
   --
+  , simpleRequestURI
   , requestURI
+  , getURI
+  , simpleRequest
   , request
+  , get
   ) where
 
 import Prelude
@@ -26,12 +31,24 @@ import Data.StrMap (StrMap, empty, insert)
 
 import Control.Bind ((<=<))
 import Control.Monad.Aff as Aff
+import Control.Monad.Aff.Unsafe (unsafeInterleaveAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (Error)
+import Control.Monad.Eff.Class (liftEff)
 
 import Node.HTTP (HTTP) as Node
 import Node.HTTP.Client as Client
 import Node.Stream as Stream
+import Node.Buffer as Buffer
+
+type From x = x
+
+type Response a = { body :: a
+                  , statusCode :: Int
+                  , statusMessage :: String
+                  , responseHeaders :: StrMap String
+                  , httpVersion :: String
+                }
 
 data Protocol = HTTP | HTTPS
 
@@ -81,35 +98,88 @@ foreign import collapseStream :: forall w e. Stream.Readable w e
 collapseStreamAff :: forall w e. Stream.Readable w e -> Aff.Aff e String
 collapseStreamAff = Aff.makeAff <<< collapseStream
 
+collectResponseInfo :: Client.Response -> Response (Client.Response)
+collectResponseInfo resp =
+  let body = resp
+      httpVersion = Client.httpVersion resp
+      responseHeaders = Client.responseHeaders resp
+      statusCode = Client.statusCode resp
+      statusMessage = Client.statusMessage resp
+   in { body, httpVersion, responseHeaders, statusCode, statusMessage }
+
+writeEndIgnore :: forall a e.(a -> (Client.Response -> Eff (http :: Node.HTTP | e) Unit) -> Eff (http :: Node.HTTP | e) Client.Request)
+                       -> a -> Buffer.Buffer
+                       -> (Client.Response -> Eff (http :: Node.HTTP | e) Unit)
+                       -> Eff (http :: Node.HTTP | e) Unit
+writeEndIgnore r a b sc = do
+  req <- r a sc
+  let stream = Client.requestAsStream req
+  Stream.write stream b (pure unit)
+  Stream.end stream (pure unit)
+
+requestImpl :: forall e a b. (a -> b -> Aff.Aff (http :: Node.HTTP | e) Client.Response)
+            -> a -> b
+            -> Aff.Aff (http :: Node.HTTP | e) (Response String)
+requestImpl r a b = do
+  resp <- r a b
+  body <- collapseStreamAff $ Client.responseAsStream resp
+  let resp' = collectResponseInfo resp
+  pure $ resp' { body = body }
+
+getEmptyBuffer :: forall e. Aff.Aff e Buffer.Buffer
+getEmptyBuffer = unsafeInterleaveAff buffer
+  where
+  buffer :: Aff.Aff ( buffer :: Buffer.BUFFER ) Buffer.Buffer
+  buffer = liftEff $ Buffer.create 0
+
 -- from URI
 
-closeAndIgnoreResponseURI :: forall e. String
+writeEndIgnoreURI :: forall e. String -> Buffer.Buffer
                           -> (Client.Response -> Eff ( http :: Node.HTTP | e ) Unit)
                           -> Eff ( http :: Node.HTTP | e ) Unit
-closeAndIgnoreResponseURI addr sc = do
-  req <- Client.requestFromURI addr sc
-  Stream.end (Client.requestAsStream req) (pure unit)
+writeEndIgnoreURI = writeEndIgnore Client.requestFromURI
 
-requestURIAsAff :: forall e. String
+requestURIAsAff :: forall e. String -> Buffer.Buffer
                 -> Aff.Aff ( http :: Node.HTTP | e ) Client.Response
-requestURIAsAff = Aff.makeAff <<< const <<< closeAndIgnoreResponseURI
+requestURIAsAff s = Aff.makeAff <<< const <<< writeEndIgnoreURI s
 
-requestURI :: forall e. String -> Aff.Aff ( http :: Node.HTTP | e ) String
-requestURI = collapseStreamAff <<< Client.responseAsStream <=< requestURIAsAff
+simpleRequestURI :: forall e. String -> Buffer.Buffer -> Aff.Aff ( http :: Node.HTTP | e ) (Response String)
+simpleRequestURI = requestImpl requestURIAsAff
+
+requestURI :: forall e. String -> Aff.Aff ( http :: Node.HTTP | e ) (Response String)
+requestURI s = getEmptyBuffer >>= simpleRequestURI s
+
+getURI :: forall e. String -> Aff.Aff ( http :: Node.HTTP | e ) String
+getURI = collapseStreamAff <<< Client.responseAsStream <=< bempty
+  where
+  bempty :: String -> Aff.Aff ( http :: Node.HTTP | e ) Client.Response
+  bempty s = getEmptyBuffer >>= requestURIAsAff s
 
 -- from Options
 
-closeAndIgnoreResponseOptions :: forall e. Options.Options Client.RequestOptions
+writeEndIgnoreOptions :: forall e. Options.Options Client.RequestOptions
+                              -> Buffer.Buffer
                               -> (Client.Response -> Eff ( http :: Node.HTTP | e ) Unit)
                               -> Eff ( http :: Node.HTTP | e ) Unit
-closeAndIgnoreResponseOptions opts sc = do
-  req <- Client.request opts sc
-  Stream.end (Client.requestAsStream req) (pure unit)
+writeEndIgnoreOptions = writeEndIgnore Client.request
 
 requestAsAff :: forall e. Options.Options Client.RequestOptions
+             -> Buffer.Buffer
              -> Aff.Aff ( http :: Node.HTTP | e ) Client.Response
-requestAsAff = Aff.makeAff <<< const <<< closeAndIgnoreResponseOptions
+requestAsAff o = Aff.makeAff <<< const <<< writeEndIgnoreOptions o
+
+simpleRequest :: forall e. Options.Options Client.RequestOptions
+        -> Buffer.Buffer
+        -> Aff.Aff ( http :: Node.HTTP | e ) (Response String)
+simpleRequest = requestImpl requestAsAff
 
 request :: forall e. Options.Options Client.RequestOptions
-        -> Aff.Aff ( http :: Node.HTTP | e ) String
-request = collapseStreamAff <<< Client.responseAsStream <=< requestAsAff
+        -> Aff.Aff ( http :: Node.HTTP | e ) (Response String)
+request o = getEmptyBuffer >>= simpleRequest o
+
+get :: forall e. Options.Options Client.RequestOptions
+    -> Aff.Aff ( http :: Node.HTTP | e ) String
+get = collapseStreamAff <<< Client.responseAsStream <=< bempty
+  where
+  bempty :: Options.Options Client.RequestOptions -> Aff.Aff ( http :: Node.HTTP | e ) Client.Response
+  bempty o = getEmptyBuffer >>= requestAsAff o
