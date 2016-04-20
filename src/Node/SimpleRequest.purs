@@ -28,6 +28,7 @@ import Data.Functor.Contravariant ((>$<))
 import Data.Tuple (Tuple(..))
 import Data.Foldable (class Foldable, foldl)
 import Data.StrMap (StrMap, empty, insert)
+import Data.Maybe (fromMaybe)
 
 import Control.Bind ((<=<))
 import Control.Monad.Aff as Aff
@@ -44,7 +45,7 @@ import Node.Buffer as Buffer
 type From x = x
 
 type Response a = { body :: a
-                  , statusCode :: Int
+                  , statusCode :: Network.StatusCode
                   , statusMessage :: String
                   , responseHeaders :: StrMap String
                   , httpVersion :: String
@@ -103,7 +104,7 @@ collectResponseInfo resp =
   let body = resp
       httpVersion = Client.httpVersion resp
       responseHeaders = Client.responseHeaders resp
-      statusCode = Client.statusCode resp
+      statusCode = fromMaybe Network.NoStatus $ Network.number2Status $ Client.statusCode resp
       statusMessage = Client.statusMessage resp
    in { body, httpVersion, responseHeaders, statusCode, statusMessage }
 

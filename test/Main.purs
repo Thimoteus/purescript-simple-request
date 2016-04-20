@@ -1,6 +1,7 @@
 module Test.Main where
 
 import Prelude
+import Debug.Trace as Debug
 
 import Control.Monad.Aff as Aff
 import Control.Monad.Aff.Console (log, print)
@@ -39,6 +40,12 @@ optsTest = do
   print $ length res2.body
   log "Status code:"
   print res2.statusCode
+  log "Status message:"
+  print res2.statusMessage
+  log "Response headers:"
+  Debug.traceAnyA res2.responseHeaders -- responseHeaders aren't actually a StrMap string
+  log "HTTP Version:"
+  print res2.httpVersion
 
 postTest = do
   postData <- liftEff $ Buffer.fromString "hello" UTF8
@@ -49,4 +56,4 @@ postTest = do
 main = Aff.runAff Console.print pure $ void do
   simpleTest
   optsTest
-  postTest
+  -- postTest
