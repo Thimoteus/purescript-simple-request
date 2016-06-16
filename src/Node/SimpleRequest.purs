@@ -42,8 +42,6 @@ import Node.HTTP.Client as Client
 import Node.Stream as Stream
 import Node.Buffer as Buffer
 
-type From x = x
-
 type Response a = { body :: a
                   , statusCode :: Network.StatusCode
                   , statusMessage :: String

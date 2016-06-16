@@ -4,7 +4,7 @@ import Prelude
 import Debug.Trace as Debug
 
 import Control.Monad.Aff as Aff
-import Control.Monad.Aff.Console (log, print)
+import Control.Monad.Aff.Console (log, logShow)
 import Control.Monad.Eff.Console as Console
 import Control.Monad.Eff.Class (liftEff)
 
@@ -37,15 +37,15 @@ simpleTest = do
 optsTest = do
   res2 <- SR.request testOpts
   log "Body length:"
-  print $ length res2.body
+  logShow $ length res2.body
   log "Status code:"
-  print res2.statusCode
+  logShow res2.statusCode
   log "Status message:"
-  print res2.statusMessage
+  logShow res2.statusMessage
   log "Response headers:"
   Debug.traceAnyA res2.responseHeaders -- responseHeaders aren't actually a StrMap string
   log "HTTP Version:"
-  print res2.httpVersion
+  logShow res2.httpVersion
 
 postTest = do
   postData <- liftEff $ Buffer.fromString "hello" UTF8
@@ -53,7 +53,7 @@ postTest = do
   log "Body:"
   log res3.body
 
-main = Aff.runAff Console.print pure $ void do
+main = Aff.runAff Console.logShow pure $ void do
   simpleTest
   optsTest
-  -- postTest
+  postTest

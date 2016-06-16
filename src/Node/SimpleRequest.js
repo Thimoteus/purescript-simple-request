@@ -1,5 +1,3 @@
-// module Node.SimpleRequest
-
 exports.collapseStream = function (stream) {
   return function (onErr) {
     return function (onSucc) {
