@@ -46,6 +46,7 @@ type Response a = { body :: a
                   , statusCode :: Network.StatusCode
                   , statusMessage :: String
                   , responseHeaders :: StrMap String
+                  , responseCookies :: Array String
                   , httpVersion :: String
                 }
 
@@ -102,9 +103,10 @@ collectResponseInfo resp =
   let body = resp
       httpVersion = Client.httpVersion resp
       responseHeaders = Client.responseHeaders resp
+      responseCookies = fromMaybe ([]::Array String) $ Client.responseCookies resp
       statusCode = fromMaybe Network.NoStatus $ Network.number2Status $ Client.statusCode resp
       statusMessage = Client.statusMessage resp
-   in { body, httpVersion, responseHeaders, statusCode, statusMessage }
+   in { body, httpVersion, responseHeaders, responseCookies, statusCode, statusMessage }
 
 writeEndIgnore :: forall a e.(a -> (Client.Response -> Eff (http :: Node.HTTP | e) Unit) -> Eff (http :: Node.HTTP | e) Client.Request)
                        -> a -> Buffer.Buffer
