@@ -48,12 +48,13 @@ testOpts = SR.hostname := "www.reddit.com"
         <> SR.protocol := SR.HTTPS
         <> SR.headers := SR.headersFromFoldable [HTTP.UserAgent /\ "purescript-simple-request testing"]
 
-main :: forall e. Eff ( console :: CONSOLE, http :: HTTP | e ) ( Canceler
-                                                                  ( console :: CONSOLE
-                                                                  , http :: HTTP
-                                                                  | e
-                                                                  )
-                                                                )
+main :: forall e. Eff ( console :: CONSOLE
+                      , http :: HTTP | e
+                      ) ( Canceler
+                            ( console :: CONSOLE
+                            , http :: HTTP | e
+                            )
+                        )
 main = Aff.runAff logShow pure $ void do
   res1 <- Aff.attempt $ SR.requestURI "https://www.reddit.com/r/purescript.json"
   liftEff $ either (const $ log "aww :(") (const $ log "yay!") res1
