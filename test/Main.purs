@@ -30,6 +30,11 @@ testPost = SR.hostname := "httpbin.org"
         <> SR.method := HTTP.POST
         <> SR.protocol := SR.HTTP
 
+testCookie = SR.hostname := "httpbin.org"
+        <> SR.path := "/cookies/set?name=value&name1=value1"
+        <> SR.method := HTTP.GET
+        <> SR.protocol := SR.HTTP
+
 simpleTest = do
   res1 <- Aff.attempt $ SR.requestURI "https://www.reddit.com/r/purescript.json"
   either (const $ log "aww :(") (const $ log "yay!") res1
@@ -47,6 +52,11 @@ optsTest = do
   log "HTTP Version:"
   logShow res2.httpVersion
 
+cookieTest = do
+  res3 <- SR.request testCookie
+  log "Cookies:"
+  logShow $ res3.responseCookies
+
 postTest = do
   postData <- liftEff $ Buffer.fromString "hello" UTF8
   res3 <- SR.simpleRequest testPost postData
@@ -57,3 +67,4 @@ main = Aff.runAff Console.logShow pure $ void do
   simpleTest
   optsTest
   postTest
+  cookieTest
