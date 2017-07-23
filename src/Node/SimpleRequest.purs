@@ -30,9 +30,8 @@ import Data.Foldable (class Foldable, foldl)
 import Data.StrMap (StrMap, empty, insert)
 import Data.Maybe (fromMaybe)
 
-import Control.Bind ((<=<))
 import Control.Monad.Aff as Aff
-import Control.Monad.Aff.Unsafe (unsafeInterleaveAff)
+import Control.Monad.Aff.Unsafe (unsafeCoerceAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Class (liftEff)
@@ -115,7 +114,7 @@ writeEndIgnore :: forall a e.(a -> (Client.Response -> Eff (http :: Node.HTTP | 
 writeEndIgnore r a b sc = do
   req <- r a sc
   let stream = Client.requestAsStream req
-  Stream.write stream b (pure unit)
+  void $ Stream.write stream b (pure unit)
   Stream.end stream (pure unit)
 
 requestImpl :: forall e a b. (a -> b -> Aff.Aff (http :: Node.HTTP | e) Client.Response)
@@ -128,7 +127,7 @@ requestImpl r a b = do
   pure $ resp' { body = body }
 
 getEmptyBuffer :: forall e. Aff.Aff e Buffer.Buffer
-getEmptyBuffer = unsafeInterleaveAff buffer
+getEmptyBuffer = unsafeCoerceAff buffer
   where
   buffer :: Aff.Aff ( buffer :: Buffer.BUFFER ) Buffer.Buffer
   buffer = liftEff $ Buffer.create 0
